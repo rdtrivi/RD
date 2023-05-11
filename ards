@@ -1,54 +1,4 @@
-/*
 
-arduino thermocycle serial command handling
-
-to start the program this is the command
-
-START
-
-to stop the program this is the command
-
-STOP
-
-to preheat the heat block this is the command with a default temperature of 90c
-
-PRE_HEAT
-
-to set preheat temperature this is the command
-
-PRE_HEAT T=95
-
-to cooldown the heat block this is the command
-
-COOLDOWN
-
-to get the PID value this is the command
-
-GET_PID
-
-to set the PID tune value this is the command
-
-PID_TUNE SET_PID P=2 I=1 D=1
-
-to set the PID tune temperature this is the command
-
-PID_TUNE T=95
-
-to get the list of program this is the command
-
-GET_PROGRAMS
-
-to set the program this is the command
-
-SET_PROGRAM S1 T=95 D=50 RR=1
-
-to set the program cycle this is the command
-
-SET_PROGRAM CYCLES=90
-
-*/
-
-// Include necessary libraries
 #include <SerialCommand.h>
 #include <PID_v1.h>
 #include <ThermocycleStep.h>
@@ -84,7 +34,7 @@ ThermocyclerDisplay thermocyclerDisplay;
 
 // Define the PID parameters
 double Setpoint, Input, Output;
-double Kp = 9.4, Ki = 0.11, Kd = 8.2; // PID constants
+double Kp = 15, Ki = 0.25, Kd = 0; // PID constants
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 // Define enums for the program and thermal states
@@ -101,13 +51,12 @@ enum ThermalState
   Heating,
   Cooling,
   Holding,
-  ErrorThermal
 };
 
 bool isDataLogging = false;
 
 // Define program and thermal state variables
-float tolerance = 1.5;
+float tolerance = 2.0;
 bool equilibrating = false;
 bool preHeating = false;
 float preHeatTemp = 90;
@@ -116,14 +65,14 @@ ThermalState thermalState;
 
 // Define cycle count and number of cycles
 int cycleCount = 0;
-int numCycles = 2;
+int numCycles = 3;
 
 // Define the thermocycler program as a sequence of ThermocycleStep objects
 ThermocycleStep program[] = {
     //(in °C, in seconds, ramp rate)
     ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
     ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
-    ThermocycleStep("Extension", 72, 45, 0),    // Extension
+    ThermocycleStep("Extension", 72, 30, 0),    // Extension
     ThermocycleStep("Final", 72, 600, 0),       // Final Extension and Cooling
 };
 
@@ -134,17 +83,6 @@ unsigned long readTemperatureTimer = 0; // Timer for temperature
 unsigned long serialTimer = 0;          // Timer for serial communication
 unsigned long logRate = 250;            // For serial communication
 ThermocycleStep currentThermocycleStep = program[currentStep];
-
-void getPID()
-{
-  // Send current PID values over serial
-  Serial.print(F("Current PID values: Kp = "));
-  Serial.print(Kp);
-  Serial.print(F(", Ki = "));
-  Serial.print(Ki);
-  Serial.print(F(", Kd = "));
-  Serial.println(Kd);
-}
 
 float getTemperature()
 {
@@ -164,7 +102,6 @@ void preHeat()
     if (!preHeating)
     {
       preHeating = true;
-      Setpoint = preHeatTemp;
     }
 
     if (param != NULL)
@@ -494,8 +431,6 @@ void setup()
   // Initialize the serial communication
   Serial.begin(9600);
 
-  // Initialize the PID saved values
-  initPIDValue();
 
   // Set VCC pins as output and set them HIGH
   for (int i = 0; i < 3; i++)
