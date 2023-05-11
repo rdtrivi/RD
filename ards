@@ -46,22 +46,13 @@ enum ProgramState
   ErrorProgram
 };
 
-enum ThermalState
-{
-  Heating,
-  Cooling,
-  Holding,
-};
-
 bool isDataLogging = false;
 
 // Define program and thermal state variables
 float tolerance = 2.0;
 bool equilibrating = false;
 bool preHeating = false;
-float preHeatTemp = 90;
 ProgramState programState = Idle;
-ThermalState thermalState;
 
 // Define cycle count and number of cycles
 int cycleCount = 0;
@@ -70,7 +61,7 @@ int numCycles = 3;
 // Define the thermocycler program as a sequence of ThermocycleStep objects
 ThermocycleStep program[] = {
     //(in °C, in seconds, ramp rate)
-    ThermocycleStep("Pre Denaturation",95.150,0), // Pre Denaturation
+    ThermocycleStep("Pre Denaturation", 95, 150, 0), // Pre Denaturation
     ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
     ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
     ThermocycleStep("Extension", 72, 30, 0),    // Extension
@@ -118,31 +109,6 @@ void preHeat()
   else
   {
     Serial.println(F("Info: Preheating a running program is not possible."));
-  }
-}
-
-void cooldown()
-{
-  // Check if the program is not already running
-  if (programState != Running && programState == Idle)
-  {
-    if (preHeating)
-    {
-      preHeating = false;
-      Setpoint = 0;
-
-      // Stop the motor and turn off the motor driver
-      digitalWrite(motorPin1, LOW);
-      digitalWrite(motorPin2, LOW);
-      analogWrite(enablePin1, 0);
-      analogWrite(enablePin2, 0);
-
-      Serial.println(F("Cooling down!")); // print message to serial monitor
-    }
-  }
-  else
-  {
-    Serial.println(F("Info: Cooling down a running program is not possible."));
   }
 }
 
@@ -299,35 +265,33 @@ void updateTemperatureControl()
   myPID.Compute();
 
   // Set the motor driver direction and speed based on the PID output
-  if (Output > 0)
+   //Heating
+   if (Output > 0)
   {
     analogWrite(motorPin1, 0);
     analogWrite(motorPin2, Output);
-    thermalState = Heating;
   }
+  //Cooling
   else if (Output < 0)
   {
     analogWrite(motorPin1, abs(Output));
     analogWrite(motorPin2, 0);
-    thermalState = Cooling;
   }
   else
+  //Holding
   {
     // Stop the motor and set the thermal state to holding
     analogWrite(motorPin1, 0);
     analogWrite(motorPin2, 0);
-    thermalState = Holding;
   }
 }
 
 void programRunning()
 {
 
-  // Set the target temperature based on the current step of the thermocycle with ramp rate
-  Setpoint = currentThermocycleStep.getTemperature() + (currentThermocycleStep.getRampRate() * (millis() - startTime) / 1000);
-
+  
   // // Set the target temperature based on the current step of the thermocycle
-  // Setpoint = currentThermocycleStep.getTemperature();
+   Setpoint = currentThermocycleStep.getTemperature();
 
   // Run the Peltier element to heat/cool the system
   updateTemperatureControl();
@@ -346,7 +310,7 @@ void programRunning()
     if (millis() - startTime >= duration * 1000)
     {
       // If the current step is the last step of a cycle, increment the cycle count
-      if (currentStep == )
+      if (currentStep == 3)
       {
         cycleCount++;
 
@@ -469,7 +433,6 @@ void setup()
   sCmd.addCommand("START", startProgram);
   sCmd.addCommand("STOP", stopProgram);
   sCmd.addCommand("PRE_HEAT", preHeat);
-  sCmd.addCommand("COOLDOWN", cooldown);
   sCmd.addCommand("PLOTTER", serialDataLog);
 
   // Initialize LCD display
