@@ -52,7 +52,6 @@ SET_PROGRAM CYCLES=90
 #include <SerialCommand.h>
 #include <PID_v1.h>
 #include <ThermocycleStep.h>
-#include <EEPROM.h>
 #include <ThermocyclerDisplay.h>
 
 #define THERMISTOR_PIN A2           // Pin connected to thermistor
@@ -94,7 +93,6 @@ enum ProgramState
   Idle,
   Running,
   Stopped,
-  PID_Tune,
   ErrorProgram
 };
 
@@ -154,142 +152,6 @@ float getTemperature()
   float resistance = REF_RESISTOR * (1023.0 / reading - 1.0);                                                // Calculate thermistor resistance using voltage divider formula
   float temperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / ROOM_TEMP_RESISTANCE)) - 273.15; // Calculate temperature using Steinhart-Hart equation
   return temperature;
-}
-
-void setPID()
-{
-  String param = sCmd.next();
-  // extract and set P, I, and D values
-  while (param != NULL)
-  {
-    if (param.startsWith("P="))
-    {
-      Kp = param.substring(2).toDouble();
-      // Set P value in PID controller
-    }
-    else if (param.startsWith("I="))
-    {
-      Serial.println(param);
-      Ki = param.substring(2).toDouble();
-      // Set I value in PID controller
-    }
-    else if (param.startsWith("D="))
-    {
-      Kd = param.substring(2).toDouble();
-      // Set D value in PID controller
-    }
-    myPID.SetTunings(Kp, Ki, Kd);
-    getPID();
-    param = sCmd.next();
-  }
-}
-
-// Function to load PID values from EEPROM
-void loadPIDValues(double &savedKp, double &savedKi, double &savedKd, int &flag)
-{
-  // Load the PID values from EEPROM if they have been saved before
-  int addr = 0;
-  EEPROM.get(addr, savedKp);
-  addr += sizeof(savedKp);
-  EEPROM.get(addr, savedKi);
-  addr += sizeof(savedKi);
-  EEPROM.get(addr, savedKd);
-  addr += sizeof(savedKd);
-  EEPROM.get(addr, flag);
-}
-
-void initPIDValue()
-{
-
-  double savedKp, savedKi, savedKd;
-  int flag;
-
-  loadPIDValues(savedKp, savedKi, savedKd, flag);
-
-  if (flag == 1)
-  {
-    // If the flag is set, load the saved values and update the PID controller
-    Kp = savedKp;
-    Ki = savedKi;
-    Kd = savedKd;
-
-    Serial.println(F("PID values loaded from EEPROM."));
-  }
-  else
-  {
-    // If the flag is not set, use the default values and save them to EEPROM
-    EEPROM.put(0, Kp);
-    EEPROM.put(sizeof(Kp), Ki);
-    EEPROM.put(sizeof(Kp) + sizeof(Ki), Kd);
-    EEPROM.put(sizeof(Kp) + sizeof(Ki) + sizeof(Kd), 1);
-
-    Serial.println(F("Default PID values saved to EEPROM."));
-  }
-}
-
-// PIDTune function to handle PID tuning.
-void PIDTune()
-{
-  programState = PID_Tune;    // set program state to PID tuning
-  String param = sCmd.next(); // get the next parameter from serial monitor
-
-  // loop through all the parameters
-  while (param != NULL)
-  {
-    // set the PID values
-    if (param.startsWith("SET_PID"))
-    {
-      setPID(); // call setPID function
-    }
-    // exit PID tuning mode
-    else if (param.startsWith("DONE"))
-    {
-      programState = Idle;                   // set program state to Idle
-      Serial.println(F("PID tuning done!")); // print message to serial monitor
-
-      // Stop the motor and turn off the motor driver
-      digitalWrite(motorPin1, LOW);
-      digitalWrite(motorPin2, LOW);
-      analogWrite(enablePin1, 0);
-      analogWrite(enablePin2, 0);
-
-      break; // exit the loop
-    }
-    // save the PID values to EEPROM
-    else if (param.startsWith("SAVE_PID"))
-    {
-      double savedKp, savedKi, savedKd;
-      int flag;
-
-      loadPIDValues(savedKp, savedKi, savedKd, flag); // load PID values from EEPROM
-
-      // check if there are any changes made to the PID values
-      if (savedKp == Kp && savedKi == Ki && savedKd == Kd)
-      {
-        Serial.println(F("No changes made")); // print message to serial monitor
-        break;                                // exit the loop
-      }
-      // save the PID values to EEPROM
-      int addr = 0;
-      EEPROM.put(addr, Kp);
-      addr += sizeof(Kp);
-      EEPROM.put(addr, Ki);
-      addr += sizeof(Ki);
-      EEPROM.put(addr, Kd);
-      addr += sizeof(Kd);
-      EEPROM.put(addr, 1); // save a flag to indicate that the values have been saved
-
-      // send a response back to the serial monitor
-      Serial.println(F("PID values updated and saved to EEPROM."));
-    }
-    // set the target value
-    else if (param.startsWith("T="))
-    {
-      Setpoint = param.substring(2).toDouble();              // get the target value and convert it to double
-      Serial.println("Target sets to: " + String(Setpoint)); // print message to serial monitor
-    }
-    param = sCmd.next(); // get the next parameter from serial monitor
-  }
 }
 
 void preHeat()
@@ -357,56 +219,6 @@ int digitCount(int num)
   return count;
 }
 
-void getPrograms()
-{
-  Serial.println(F("\nThermocycle program:\n"));
-  Serial.println(F("|Step Name       |Temperature (C)|Duration (s)|Ramp Rate|"));
-
-  for (int i = 0; i < sizeof(program) / sizeof(program[0]); i++)
-  {
-
-    ThermocycleStep step = program[i];
-    // Get the duration of the current step
-    unsigned long duration = step.getDuration();
-
-    Serial.print(F("|"));
-    Serial.print(step.getName());
-    Serial.print(F(" "));
-    for (int j = step.getName().length(); j < 15; j++)
-    {
-      Serial.print(F(" "));
-    }
-
-    Serial.print(F("|"));
-    Serial.print(step.getTemperature());
-    Serial.print(F(" "));
-    for (int j = digitCount(step.getTemperature()); j < 11; j++)
-    {
-      Serial.print(F(" "));
-    }
-
-    Serial.print(F("|"));
-    Serial.print(duration);
-    Serial.print(F(" "));
-    for (int j = digitCount(duration); j < 11; j++)
-    {
-      Serial.print(F(" "));
-    }
-
-    Serial.print(F("|"));
-    Serial.print(step.getRampRate());
-    Serial.print(F(" "));
-    for (int j = digitCount(step.getRampRate()); j < 4; j++)
-    {
-      Serial.print(F(" "));
-    }
-
-    Serial.println(F("|"));
-  }
-
-  Serial.print(F("No. of cycles: "));
-  Serial.println(numCycles);
-}
 
 void programReset()
 {
@@ -442,90 +254,6 @@ void startProgram()
   else
   {
     Serial.println(F("Program already running"));
-  }
-}
-
-void setProgram()
-{
-  String param = sCmd.next(); // get the next parameter from serial monitor
-
-  if (param != NULL)
-  {
-
-    if (param.startsWith("CYCLES="))
-    {
-      numCycles = param.substring(7).toInt();
-    }
-    else
-    {
-
-      int index;
-
-      if (param.startsWith("S1"))
-      {
-        index = 0;
-      }
-      if (param.startsWith("S2"))
-      {
-        index = 1;
-      }
-      if (param.startsWith("S3"))
-      {
-        index = 2;
-      }
-      if (param.startsWith("F"))
-      {
-        index = 3;
-      }
-
-      if (index >= 0 && index < 4)
-      {
-        ThermocycleStep step = program[index]; // set the program step at the given index
-
-        double temp = step.getTemperature();
-        int duration = step.getDuration();
-        double rampRate = step.getRampRate();
-
-        param = sCmd.next();
-
-        while (param != NULL)
-        {
-
-          if (param.startsWith("T="))
-          {
-            temp = param.substring(2).toDouble();
-          }
-          else if (param.startsWith("D="))
-          {
-            duration = param.substring(2).toDouble();
-          }
-          else if (param.startsWith("RR="))
-          {
-            rampRate = param.substring(3).toDouble();
-          }
-          else
-          {
-            Serial.println(F("Invalid parameter"));
-            return;
-          }
-
-          param = sCmd.next();
-        }
-
-        step.setDuration(duration);
-        step.setTemperature(temp);
-        step.setRampRate(rampRate);
-
-        program[index] = step;
-
-        Serial.print(step.getName());
-        Serial.println(F(" program set successfully."));
-      }
-      else
-      {
-        Serial.println(F("Invalid program index."));
-      }
-    }
   }
 }
 
@@ -760,12 +488,6 @@ void dataSerialLog()
   }
 }
 
-void programPIDTune()
-{
-  updateTemperatureControl();
-  thermocyclerDisplay.displayTuning(Input, Kp, Ki, Kd);
-  dataSerialLog();
-}
 
 void setup()
 {
@@ -810,12 +532,8 @@ void setup()
   // Add serial commands for starting/stopping program, setting/getting PID
   sCmd.addCommand("START", startProgram);
   sCmd.addCommand("STOP", stopProgram);
-  sCmd.addCommand("GET_PID", getPID);
-  sCmd.addCommand("PID_TUNE", PIDTune);
   sCmd.addCommand("PRE_HEAT", preHeat);
   sCmd.addCommand("COOLDOWN", cooldown);
-  sCmd.addCommand("GET_PROGRAMS", getPrograms);
-  sCmd.addCommand("SET_PROGRAM", setProgram);
   sCmd.addCommand("PLOTTER", serialDataLog);
 
   // Initialize LCD display
@@ -841,13 +559,6 @@ void loop()
   {
     programIdle(); // Execute the code for displaying the idle screen
   }
-
-  // If the program is in PID tuning mode, execute the code for tuning the PID values
-  if (programState == PID_Tune)
-  {
-    programPIDTune(); // Execute the code for PID tuning
-  }
-
   // If data logging is enabled, send data to serial port for logging
   if (isDataLogging)
   {
