@@ -70,6 +70,7 @@ int numCycles = 3;
 // Define the thermocycler program as a sequence of ThermocycleStep objects
 ThermocycleStep program[] = {
     //(in °C, in seconds, ramp rate)
+    ThermocycleStep("Pre Denaturation",95.150,0), // Pre Denaturation
     ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
     ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
     ThermocycleStep("Extension", 72, 30, 0),    // Extension
@@ -266,7 +267,7 @@ void programComplete()
 
 void readTemperature()
 {
-  // Read the temperature from the MAX6675 module every 1 second
+  // Read the temperature from the thermistor every 1 second
   if (millis() - readTemperatureTimer >= 250)
   {
     // Add the current temperature to the array of previous samples
@@ -345,7 +346,7 @@ void programRunning()
     if (millis() - startTime >= duration * 1000)
     {
       // If the current step is the last step of a cycle, increment the cycle count
-      if (currentStep == 2)
+      if (currentStep == )
       {
         cycleCount++;
 
