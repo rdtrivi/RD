@@ -20,15 +20,6 @@ double samples[10];
 // Define pins for the motor driver
 const int motorPin1 = 6;
 const int motorPin2 = 5;
-const int enablePin1 = 3;
-const int enablePin2 = 4;
-
-// Define pin for the heater
-const int heaterPin = 10;
-
-// Define power pins
-const int vcc[] = {2, 15, 12}; // List of VCC pin numbers
-const int gnd[] = {7, 14};     // List of GND pin numbers
 
 ThermocyclerDisplay thermocyclerDisplay;
 
@@ -396,34 +387,10 @@ void setup()
   // Initialize the serial communication
   Serial.begin(9600);
 
-
-  // Set VCC pins as output and set them HIGH
-  for (int i = 0; i < 3; i++)
-  {
-    pinMode(vcc[i], OUTPUT);
-    digitalWrite(vcc[i], HIGH);
-  }
-
-  // Set GND pins as output and set them LOW
-  for (int i = 0; i < 2; i++)
-  {
-    pinMode(gnd[i], OUTPUT);
-    digitalWrite(gnd[i], LOW);
-  }
-
   // Set the motor driver pins as outputs
   pinMode(motorPin1, OUTPUT);
   pinMode(motorPin2, OUTPUT);
-  pinMode(enablePin1, OUTPUT);
-  pinMode(enablePin2, OUTPUT);
-
-  // Set the heater pin as an output
-  pinMode(heaterPin, OUTPUT);
-
-  // Turn on the motor driver by setting enable pins HIGH
-  digitalWrite(enablePin1, HIGH);
-  digitalWrite(enablePin2, HIGH);
-
+ 
   // Initialize the PID controller
   myPID.SetMode(AUTOMATIC);
   myPID.SetSampleTime(10);
