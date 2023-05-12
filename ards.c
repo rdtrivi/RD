@@ -17,7 +17,7 @@ const int numSamples = 10;
 // Define an array to store the previous temperature samples
 double samples[10];
 
-// Define pins for the motor driver
+// Define pwm pins for the motor driver
 const int motorPin1 = 6;
 const int motorPin2 = 5;
 
@@ -155,31 +155,6 @@ void serialDataLog()
   }
 }
 
-// Function to stop the thermocycling program
-void stopProgram()
-{
-  // Check if the program is running
-  if (programState == Running)
-  {
-    // Stop the motor and turn off the motor driver
-    digitalWrite(motorPin1, LOW);
-    digitalWrite(motorPin2, LOW);
-
-    // Display message on the LCD screen
-    thermocyclerDisplay.programStopped();
-
-    // Print message to serial monitor
-    Serial.println(F("Program stopped!"));
-
-    // Reset the program state
-    programReset();
-    programState = Stopped;
-  }
-  else
-  {
-    Serial.println(F("Program not running"));
-  }
-}
 
 // Function to indicate completion of the thermocycling program
 void programComplete()
@@ -382,7 +357,6 @@ void setup()
 
   // Add serial commands for starting/stopping program, setting/getting PID
   sCmd.addCommand("START", startProgram);
-  sCmd.addCommand("STOP", stopProgram);
   sCmd.addCommand("PRE_HEAT", preHeat);
   sCmd.addCommand("PLOTTER", serialDataLog);
 
