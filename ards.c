@@ -103,18 +103,6 @@ void preHeat()
   }
 }
 
-int digitCount(int num)
-{
-  int count = 0;
-  while (num > 0)
-  {
-    count++;
-    num /= 10;
-  }
-  return count;
-}
-
-
 void programReset()
 {
   // Reset the setpoint, cycle count, current step, and program state
