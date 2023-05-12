@@ -176,8 +176,6 @@ void stopProgram()
     // Stop the motor and turn off the motor driver
     digitalWrite(motorPin1, LOW);
     digitalWrite(motorPin2, LOW);
-    analogWrite(enablePin1, 0);
-    analogWrite(enablePin2, 0);
 
     // Display message on the LCD screen
     thermocyclerDisplay.programStopped();
@@ -204,8 +202,6 @@ void programComplete()
     // Stop the motor and turn off the motor driver
     digitalWrite(motorPin1, LOW);
     digitalWrite(motorPin2, LOW);
-    analogWrite(enablePin1, 0);
-    analogWrite(enablePin2, 0);
 
     // Display message on the LCD screen
     thermocyclerDisplay.programComplete();
