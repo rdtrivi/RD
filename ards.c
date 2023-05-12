@@ -33,8 +33,6 @@ enum ProgramState
 {
   Idle,
   Running,
-  Stopped,
-  ErrorProgram
 };
 
 bool isDataLogging = false;
