@@ -25,7 +25,7 @@ ThermocyclerDisplay thermocyclerDisplay;
 
 // Define the PID parameters
 double Setpoint, Input, Output;
-double Kp = 15, Ki = 0.25, Kd = 0; // PID constants
+double Kp = 15, Ki = 0.22, Kd = 0; // PID constants
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 // Define enums for the program and thermal states
