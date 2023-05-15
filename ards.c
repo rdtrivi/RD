@@ -38,7 +38,7 @@ enum ProgramState
 bool isDataLogging = false;
 
 // Define program and thermal state variables
-float tolerance = 2.0;
+float tolerance = 2.15;
 bool equilibrating = false;
 bool preHeating = false;
 ProgramState programState = Idle;
@@ -50,7 +50,6 @@ int numCycles = 3;
 // Define the thermocycler program as a sequence of ThermocycleStep objects
 ThermocycleStep program[] = {
     //(in °C, in seconds, ramp rate)
-    ThermocycleStep("Pre Denaturation", 95, 10, 0), // Pre Denaturation
     ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
     ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
     ThermocycleStep("Extension", 72, 30, 0),    // Extension
@@ -258,7 +257,7 @@ void programRunning()
     if (millis() - startTime >= duration * 1000)
     {
       // If the current step is the last step of a cycle, increment the cycle count
-      if (currentStep == 3)
+      if (currentStep == 2)
       {
         cycleCount++;
 
@@ -274,7 +273,7 @@ void programRunning()
           Serial.print(F("Cycle "));
           Serial.print(cycleCount);
           Serial.println(F(" completed."));
-          currentStep = 1;
+          currentStep = 0;
         }
       }
       else
