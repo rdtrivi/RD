@@ -68,7 +68,8 @@ float getTemperature()
 {
   int reading = analogRead(THERMISTOR_PIN);                                                                  // Read analog input from thermistor pin
   float resistance = REF_RESISTOR * (1023.0 / reading - 1.0);                                                // Calculate thermistor resistance using voltage divider formula
-  float temperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / ROOM_TEMP_RESISTANCE)) - 273.15; // Calculate temperature using Steinhart-Hart equation
+  float inttemperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / ROOM_TEMP_RESISTANCE)) - 273.15; // Calculate temperature using Steinhart-Hart equation
+  float temperature = inttemperature - 2.0;
   return temperature;
 }
 
