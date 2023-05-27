@@ -39,7 +39,6 @@ bool isDataLogging = false;
 
 // Define program and thermal state variables
 float tolerance = 2.0;
-bool equilibrating = false;
 bool preHeating = false;
 ProgramState programState = Idle;
 
