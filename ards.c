@@ -339,7 +339,6 @@ void setup()
   // Add serial commands for starting/stopping program, setting/getting PID
   sCmd.addCommand("START", startProgram);
   sCmd.addCommand("PRE_HEAT", preHeat);
-  sCmd.addCommand("PLOTTER", serialDataLog);
 
   // Initialize LCD display
   thermocyclerDisplay.init();
