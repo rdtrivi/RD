@@ -137,22 +137,6 @@ void startProgram()
   }
 }
 
-void serialDataLog()
-{
-  isDataLogging = true;
-
-  String param = sCmd.next(); // get the next parameter from serial monitor
-
-  if (param != NULL)
-  {
-    if (param.startsWith("R="))
-    {
-      logRate = param.substring(2).toInt();
-    }
-  }
-}
-
-
 // Function to indicate completion of the thermocycling program
 void programComplete()
 {
