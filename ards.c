@@ -35,7 +35,7 @@ enum ProgramState
   Running,
 };
 
-bool isDataLogging = false;
+bool isDataLogging = true;
 
 // Define program and thermal state variables
 float tolerance = 2.0;
