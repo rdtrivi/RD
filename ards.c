@@ -49,6 +49,7 @@ int numCycles = 3;
 // Define the thermocycler program as a sequence of ThermocycleStep objects
 ThermocycleStep program[] = {
     //(in °C, in seconds, ramp rate)
+    ThermocycleStep("Pre Denaturation, 95,600,0),// Pre Denaturation
     ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
     ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
     ThermocycleStep("Extension", 72, 30, 0),    // Extension
@@ -241,7 +242,7 @@ void programRunning()
     if (millis() - startTime >= duration * 1000)
     {
       // If the current step is the last step of a cycle, increment the cycle count
-      if (currentStep == 2)
+      if (currentStep == 3)
       {
         cycleCount++;
 
@@ -257,7 +258,7 @@ void programRunning()
           Serial.print(F("Cycle "));
           Serial.print(cycleCount);
           Serial.println(F(" completed."));
-          currentStep = 0;
+          currentStep = 1;
         }
       }
       else
