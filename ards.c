@@ -60,7 +60,7 @@ unsigned int currentStep = 0;
 unsigned long startTime = 0;
 unsigned long readTemperatureTimer = 0; // Timer for temperature
 unsigned long serialTimer = 0;          // Timer for serial communication
-unsigned long logRate = 250;            // For serial communication
+unsigned long logRate = 1000;            // For serial communication
 ThermocycleStep currentThermocycleStep = program[currentStep];
 
 float getTemperature()
