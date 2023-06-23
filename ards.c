@@ -42,8 +42,10 @@ float tolerance = 2.0;
 bool preHeating = false;
 ProgramState programState = Idle;
 
-// Define cycle count and number of cycles
+// Define cycle count 
 int cycleCount = 0;
+
+//Number of cycles
 int numCycles = 3;
 
 // Define the thermocycler program as a sequence of ThermocycleStep objects
