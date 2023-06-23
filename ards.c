@@ -48,7 +48,7 @@ int cycleCount = 0;
 //Number of cycles
 int numCycles = 3;
 
-// Define the thermocycler program as a sequence of ThermocycleStep objects
+// Define the thermocycler program
 ThermocycleStep program[] = {
     //(in °C, in seconds, ramp rate)
     ThermocycleStep("Pre Denaturation, 95,600,0),// Pre Denaturation
