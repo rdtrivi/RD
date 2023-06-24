@@ -2,9 +2,9 @@
 #include <PID_v1.h>
 #include <ThermocycleStep.h>
 #include <ThermocyclerDisplay.h>
-#define THERMISTOR_PIN A3           // Pin connected to thermistor
-#define REF_RESISTOR 10000          // Resistance of the reference resistor in ohms
-#define ROOM_TEMP_RESISTANCE 100000 // Resistance of the thermistor at room temperature in ohms
+#define THERMISTOR_PIN A3           
+#define REF_RESISTOR 10000          
+#define ROOM_TEMP_RESISTANCE 100000 
 SerialCommand sCmd;
 const int numSamples = 10;
 double samples[10];
@@ -17,7 +17,7 @@ double Setpoint, Input, Output; // Define the PID parameters
 double Kp = 15, Ki = 0.22, Kd = 0; // PID constants
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-enum ProgramState // Define enums for the program and thermal states
+enum ProgramState 
 {
   Idle,
   Running,
@@ -97,26 +97,6 @@ void startProgram()  // Function to start the thermocycling program
   }
 }
 
-// Function to indicate completion of the thermocycling program
-void programComplete()
-{
-  // Check if the program is running
-  if (programState == Running)
-  {
-    digitalWrite(motorPin1, LOW);     // Stop the motor and turn off the motor driver
-    digitalWrite(motorPin2, LOW);
-    thermocyclerDisplay.programComplete();
-    Serial.println(F("Program complete!"));
-    Setpoint = 0;
-    cycleCount = 0;
-    currentStep = 0;
-    currentThermocycleStep = program[0];
-  }
-  else
-  {
-    Serial.println(F("Program not running"));
-  }
-}
 void readTemperature()
 {
   // Read the temperature from the thermistor every 1 second
