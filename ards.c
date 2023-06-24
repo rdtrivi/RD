@@ -2,7 +2,7 @@
 #include <PID_v1.h>
 #include <ThermocycleStep.h>
 #include <ThermocyclerDisplay.h>
-#define THERMISTOR_PIN A3           
+#define THERMISTOR_PIN A2  
 #define REF_RESISTOR 10000          
 #define ROOM_TEMP_RESISTANCE 100000 
 SerialCommand sCmd;
@@ -35,11 +35,11 @@ int numCycles = 35;
 
 ThermocycleStep program[] = {      // Define the thermocycler program
     //(in °C, in seconds, ramp rate)
-    ThermocycleStep("Pre Denaturation", 95,600,0),// Pre Denaturation
-    ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
-    ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
-    ThermocycleStep("Extension", 72, 30, 0),    // Extension
-    ThermocycleStep("Final", 72, 600, 0),       // Final Extension and Cooling
+    ThermocycleStep("Pre Denaturation", 33,10,0),// Pre Denaturation
+    ThermocycleStep("Denaturation", 33, 10, 0), // Denaturation
+    ThermocycleStep("Annealing", 33, 10, 0),    // Annealing
+    ThermocycleStep("Extension", 33, 10, 0),    // Extension
+    ThermocycleStep("Final", 33, 10, 0),       // Final Extension and Cooling
 };
 
 // Define variables
@@ -86,14 +86,7 @@ void startProgram()  // Function to start the thermocycling program
     programState = Running;
     preHeating = false;
     startTime = millis();
-    Serial.println(F("Program running!"));
-    Serial.print(F("\n\n\nStarting step "));
-    Serial.print(currentStep + 1);
-    Serial.print(F(": "));
-    Serial.print(currentThermocycleStep.getName());
-    Serial.print(F(" for "));
-    Serial.print(currentThermocycleStep.getDuration());
-    Serial.println(F(" seconds.\n\n\n"));
+    Serial.print("Start");
   }
 }
 
@@ -189,7 +182,6 @@ void programRunning()
       // Check if the program is complete
       if (currentStep >= sizeof(program) / sizeof(program[0]))
       {
-        programComplete();
       }
       else
       {
