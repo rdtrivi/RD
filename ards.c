@@ -71,7 +71,6 @@ float getTemperature()
   int reading = analogRead(THERMISTOR_PIN);                                                                  // Read analog input from thermistor pin
   float resistance = REF_RESISTOR * (1023.0 / reading - 1.0);                                                // Calculate thermistor resistance using voltage divider formula
   float inttemperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / ROOM_TEMP_RESISTANCE)) - 273.15; // Calculate temperature using Steinhart-Hart equation
-  float temperature = inttemperature - 2.0;
   return temperature;
 }
 
@@ -103,14 +102,6 @@ void preHeat()
   }
 }
 
-void programReset()
-{
-  // Reset the setpoint, cycle count, current step, and program state
-  Setpoint = 0;
-  cycleCount = 0;
-  currentStep = 0;
-  currentThermocycleStep = program[0];
-}
 
 // Function to start the thermocycling program
 void startProgram()
@@ -118,7 +109,6 @@ void startProgram()
   // Check if the program is not already running
   if (programState != Running)
   {
-    programReset();
     programState = Running;
     preHeating = false;
     startTime = millis();
@@ -139,32 +129,6 @@ void startProgram()
     Serial.println(F("Program already running"));
   }
 }
-
-// Function to indicate completion of the thermocycling program
-void programComplete()
-{
-  // Check if the program is running
-  if (programState == Running)
-  {
-    // Stop the motor and turn off the motor driver
-    digitalWrite(motorPin1, LOW);
-    digitalWrite(motorPin2, LOW);
-
-    // Display message on the LCD screen
-    thermocyclerDisplay.programComplete();
-
-    // Print message to serial monitor
-    Serial.println(F("Program complete!"));
-
-    // Reset program state
-    programReset();
-  }
-  else
-  {
-    Serial.println(F("Program not running"));
-  }
-}
-
 void readTemperature()
 {
   // Read the temperature from the thermistor every 1 second
@@ -268,28 +232,6 @@ void programRunning()
         // If the current step is not the last step, increment the step count
         currentStep++;
       }
-
-      // Check if the program is complete
-      if (currentStep >= sizeof(program) / sizeof(program[0]))
-      {
-        programComplete();
-      }
-      else
-      {
-        // Set the current thermocycle step and start the timer
-        currentThermocycleStep = program[currentStep];
-        startTime = millis();
-
-        // Display the name and duration of the current step
-        Serial.print(F("\n\n\nStarting step "));
-        Serial.print(currentStep + 1);
-        Serial.print(F(": "));
-        Serial.print(currentThermocycleStep.getName());
-        Serial.print(F(" for "));
-        Serial.print(currentThermocycleStep.getDuration());
-        Serial.println(F(" seconds.\n\n\n"));
-      }
-    }
   }
   else
   {
@@ -316,15 +258,13 @@ void dataSerialLog()
   {
     Serial.print(F(" Set_point:"));
     Serial.print(Setpoint);
-    Serial.print(F(" Ouput:"));
+    Serial.print(F(" Output:"));
     Serial.print(Output);
     Serial.print(F(" Input:"));
     Serial.println(Input);
     serialTimer = millis();
   }
 }
-
-
 void setup()
 {
   // Initialize the serial communication
