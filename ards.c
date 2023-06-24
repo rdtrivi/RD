@@ -35,7 +35,7 @@ int numCycles = 35;
 
 ThermocycleStep program[] = {      // Define the thermocycler program
     //(in °C, in seconds, ramp rate)
-    ThermocycleStep("Pre Denaturation, 95,600,0),// Pre Denaturation
+    ThermocycleStep("Pre Denaturation", 95,600,0),// Pre Denaturation
     ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
     ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
     ThermocycleStep("Extension", 72, 30, 0),    // Extension
