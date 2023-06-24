@@ -1,40 +1,27 @@
-
 #include <SerialCommand.h>
 #include <PID_v1.h>
 #include <ThermocycleStep.h>
 #include <ThermocyclerDisplay.h>
-
 #define THERMISTOR_PIN A3           // Pin connected to thermistor
 #define REF_RESISTOR 10000          // Resistance of the reference resistor in ohms
 #define ROOM_TEMP_RESISTANCE 100000 // Resistance of the thermistor at room temperature in ohms
-
-// Initialize SerialCommand instance
 SerialCommand sCmd;
-
-// Define the number of samples to use in the moving average filter
 const int numSamples = 10;
-
-// Define an array to store the previous temperature samples
 double samples[10];
-
-// Define pwm pins for the motor driver
 const int motorPin1 = 6;
 const int motorPin2 = 5;
-
 ThermocyclerDisplay thermocyclerDisplay;
 
-// Define the PID parameters
-double Setpoint, Input, Output;
+
+double Setpoint, Input, Output; // Define the PID parameters
 double Kp = 15, Ki = 0.22, Kd = 0; // PID constants
 PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
-// Define enums for the program and thermal states
-enum ProgramState
+enum ProgramState // Define enums for the program and thermal states
 {
   Idle,
   Running,
 };
-
 bool isDataLogging = true;
 
 // Define program and thermal state variables
@@ -42,24 +29,21 @@ float tolerance = 2.0;
 bool preHeating = false;
 ProgramState programState = Idle;
 
-// Define cycle count 
+// Define num cycles 
 int cycleCount = 0;
+int numCycles = 35;
 
-//Number of cycles
-int numCycles = 3;
-
-// Define the thermocycler program
-ThermocycleStep program[] = {
+ThermocycleStep program[] = {      // Define the thermocycler program
     //(in °C, in seconds, ramp rate)
-    ThermocycleStep("Pre Denaturation", 95,600,0),// Pre Denaturation
+    ThermocycleStep("Pre Denaturation, 95,600,0),// Pre Denaturation
     ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
     ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
     ThermocycleStep("Extension", 72, 30, 0),    // Extension
     ThermocycleStep("Final", 72, 600, 0),       // Final Extension and Cooling
 };
 
-// Define variables for the thermocycler program
-unsigned int currentStep = 0;
+// Define variables
+unsigned int currentStep = 0;  // Define variables
 unsigned long startTime = 0;
 unsigned long readTemperatureTimer = 0; // Timer for temperature
 unsigned long serialTimer = 0;          // Timer for serial communication
@@ -73,19 +57,16 @@ float getTemperature()
   float temperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / ROOM_TEMP_RESISTANCE)) - 273.15; // Calculate temperature using Steinhart-Hart equation
   return temperature;
 }
-
 void preHeat()
 {
   // Check if the program is not already running
   if (programState != Running)
   {
     String param = sCmd.next(); // get the next parameter from serial monitor
-
     if (!preHeating)
     {
       preHeating = true;
     }
-
     if (param != NULL)
     {
       // set the target value
@@ -96,26 +77,16 @@ void preHeat()
       }
     }
   }
-  else
-  {
-    Serial.println(F("Info: Preheating a running program is not possible."));
-  }
 }
 
-
-// Function to start the thermocycling program
-void startProgram()
+void startProgram()  // Function to start the thermocycling program
 {
-  // Check if the program is not already running
   if (programState != Running)
   {
     programState = Running;
     preHeating = false;
     startTime = millis();
-
     Serial.println(F("Program running!"));
-
-    // Display the name and duration of the current step
     Serial.print(F("\n\n\nStarting step "));
     Serial.print(currentStep + 1);
     Serial.print(F(": "));
@@ -124,9 +95,26 @@ void startProgram()
     Serial.print(currentThermocycleStep.getDuration());
     Serial.println(F(" seconds.\n\n\n"));
   }
+}
+
+// Function to indicate completion of the thermocycling program
+void programComplete()
+{
+  // Check if the program is running
+  if (programState == Running)
+  {
+    digitalWrite(motorPin1, LOW);     // Stop the motor and turn off the motor driver
+    digitalWrite(motorPin2, LOW);
+    thermocyclerDisplay.programComplete();
+    Serial.println(F("Program complete!"));
+    Setpoint = 0;
+    cycleCount = 0;
+    currentStep = 0;
+    currentThermocycleStep = program[0];
+  }
   else
   {
-    Serial.println(F("Program already running"));
+    Serial.println(F("Program not running"));
   }
 }
 void readTemperature()
@@ -141,16 +129,13 @@ void readTemperature()
     }
     samples[numSamples - 1] = getTemperature();
     ;
-
     // Compute the moving average temperature
     double sum = 0;
     for (int i = 0; i < numSamples; i++)
     {
       sum += samples[i];
     }
-
     double movingAverage = sum / numSamples;
-
     Input = movingAverage;
     readTemperatureTimer = millis();
   }
@@ -158,12 +143,8 @@ void readTemperature()
 
 void updateTemperatureControl()
 {
-
-  // Execute the PID algorithm to control the motor driver PWM signal
-  myPID.Compute();
-
-  // Set the motor driver direction and speed based on the PID output
-   //Heating
+  myPID.Compute();   // Execute the PID algorithm
+     //Heating
    if (Output > 0)
   {
     analogWrite(motorPin1, 0);
@@ -183,27 +164,19 @@ void updateTemperatureControl()
     analogWrite(motorPin2, 0);
   }
 }
-
 void programRunning()
-{
-
-  
+{  
   // // Set the target temperature based on the current step of the thermocycle
    Setpoint = currentThermocycleStep.getTemperature();
 
   // Run the Peltier element to heat/cool the system
   updateTemperatureControl();
-
   // Check if the temperature is within the tolerance range
   if (abs(Input - Setpoint) <= tolerance)
   {
     // Get the duration of the current step
     unsigned long duration = currentThermocycleStep.getDuration();
-
-    // Display the current temperature and thermocycle information
-
     thermocyclerDisplay.display(currentThermocycleStep.getName(), cycleCount, Input, duration * 1000, (millis() - startTime));
-
     // Check if the current thermocycle step is complete
     if (millis() - startTime >= duration * 1000)
     {
@@ -232,6 +205,28 @@ void programRunning()
         // If the current step is not the last step, increment the step count
         currentStep++;
       }
+
+      // Check if the program is complete
+      if (currentStep >= sizeof(program) / sizeof(program[0]))
+      {
+        programComplete();
+      }
+      else
+      {
+        // Set the current thermocycle step and start the timer
+        currentThermocycleStep = program[currentStep];
+        startTime = millis();
+
+        // Display the name and duration of the current step
+        Serial.print(F("\n\n\nStarting step "));
+        Serial.print(currentStep + 1);
+        Serial.print(F(": "));
+        Serial.print(currentThermocycleStep.getName());
+        Serial.print(F(" for "));
+        Serial.print(currentThermocycleStep.getDuration());
+        Serial.println(F(" seconds.\n\n\n"));
+      }
+    }
   }
   else
   {
@@ -258,35 +253,31 @@ void dataSerialLog()
   {
     Serial.print(F(" Set_point:"));
     Serial.print(Setpoint);
-    Serial.print(F(" Output:"));
+    Serial.print(F(" Ouput:"));
     Serial.print(Output);
     Serial.print(F(" Input:"));
     Serial.println(Input);
     serialTimer = millis();
   }
 }
+
+
 void setup()
 {
   // Initialize the serial communication
   Serial.begin(9600);
-
   // Set the motor driver pins as outputs
   pinMode(motorPin1, OUTPUT);
   pinMode(motorPin2, OUTPUT);
- 
   // Initialize the PID controller
   myPID.SetMode(AUTOMATIC);
   myPID.SetSampleTime(10);
   myPID.SetOutputLimits(-255, 255);
-
-  // Add serial commands for starting/stopping program, setting/getting PID
+  // For starting/stopping program
   sCmd.addCommand("START", startProgram);
   sCmd.addCommand("PRE_HEAT", preHeat);
-
-  // Initialize LCD display
   thermocyclerDisplay.init();
 }
-
 void loop()
 {
   // Read serial input and update program state
