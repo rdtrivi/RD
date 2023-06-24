@@ -51,7 +51,7 @@ int numCycles = 3;
 // Define the thermocycler program
 ThermocycleStep program[] = {
     //(in °C, in seconds, ramp rate)
-    ThermocycleStep("Pre Denaturation, 95,600,0),// Pre Denaturation
+    ThermocycleStep("Pre Denaturation", 95,600,0),// Pre Denaturation
     ThermocycleStep("Denaturation", 95, 30, 0), // Denaturation
     ThermocycleStep("Annealing", 55, 30, 0),    // Annealing
     ThermocycleStep("Extension", 72, 30, 0),    // Extension
@@ -70,7 +70,7 @@ float getTemperature()
 {
   int reading = analogRead(THERMISTOR_PIN);                                                                  // Read analog input from thermistor pin
   float resistance = REF_RESISTOR * (1023.0 / reading - 1.0);                                                // Calculate thermistor resistance using voltage divider formula
-  float inttemperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / ROOM_TEMP_RESISTANCE)) - 273.15; // Calculate temperature using Steinhart-Hart equation
+  float temperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / ROOM_TEMP_RESISTANCE)) - 273.15; // Calculate temperature using Steinhart-Hart equation
   return temperature;
 }
 
