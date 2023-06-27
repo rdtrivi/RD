@@ -1,10 +1,7 @@
 #include <SerialCommand.h>
 #include <PID_v1.h>
 #include <ThermocycleStep.h>
-#include <ThermocyclerDisplay.h>
-#define THERMISTOR_PIN A2  
-#define REF_RESISTOR 10000          
-#define ROOM_TEMP_RESISTANCE 100000 
+#include <ThermocyclerDisplay.h> 
 SerialCommand sCmd;
 const int numSamples = 10;
 double samples[10];
@@ -35,11 +32,11 @@ int numCycles = 35;
 
 ThermocycleStep program[] = {      // Define the thermocycler program
     //(in °C, in seconds, ramp rate)
-    ThermocycleStep("Pre Denaturation", 33,10,0),// Pre Denaturation
-    ThermocycleStep("Denaturation", 33, 10, 0), // Denaturation
-    ThermocycleStep("Annealing", 33, 10, 0),    // Annealing
-    ThermocycleStep("Extension", 33, 10, 0),    // Extension
-    ThermocycleStep("Final", 33, 10, 0),       // Final Extension and Cooling
+    ThermocycleStep("Pre Denaturation", 95, 600,0),// Pre Denaturation
+    ThermocycleStep("Denaturation", 95, 60, 0), // Denaturation
+    ThermocycleStep("Annealing", 55, 60, 0),    // Annealing
+    ThermocycleStep("Extension", 72, 60, 0),    // Extension
+    ThermocycleStep("Final", 95, 600, 0),       // Final Extension and Cooling
 };
 
 // Define variables
@@ -52,9 +49,9 @@ ThermocycleStep currentThermocycleStep = program[currentStep];
 
 float getTemperature()
 {
-  int reading = analogRead(THERMISTOR_PIN);                                                                  // Read analog input from thermistor pin
-  float resistance = REF_RESISTOR * (1023.0 / reading - 1.0);                                                // Calculate thermistor resistance using voltage divider formula
-  float temperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / ROOM_TEMP_RESISTANCE)) - 273.15; // Calculate temperature using Steinhart-Hart equation
+  int reading = analogRead(A2);                                                                  // Read analog input from thermistor pin
+  float resistance = 10000 * (1023.0 / reading - 1.0);                                                // Calculate thermistor resistance using voltage divider formula
+  float temperature = 1.0 / (1.0 / 298.15 + 1.0 / 3977.0 * log(resistance / 100000)) - 273.15; // Calculate temperature using Steinhart-Hart equation
   return temperature;
 }
 void preHeat()
